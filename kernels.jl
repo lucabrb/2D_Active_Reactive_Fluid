@@ -66,9 +66,9 @@ end
 
 function compute_RHS!(V, Π, fV, fΠ, FT, IFT, Lkx, factor_∂x, factor_∂y, factor_Δ, Z, B, C, Np, Nm, ΔC, ΔNp, ΔNm, ∂CV, ∂NpV, ∂NmV, div_CV, div_NpV, div_NmV, RHS_C, RHS_Np, RHS_Nm, Dc, Dap, Dam, A, Kd, Ω0, Ω, Ωd)
     
-    Π[:,:] .= Z*(C[:,:]^2) - B*(C[:,:]^3)
+    @. Π[:,:] = Z*(C[:,:]^2) - B*(C[:,:]^3)
     # 🚧 Might as well use the relation in Bois et al, PRL (2011)? 🚧
-    # Π[:,:] .= Z*C[:,:]/(1+C[:,:])
+    # @. Π[:,:] = Z * C[:,:] / (1 + C[:,:])
 
     @inbounds @views begin
         fΠ[:,:] .= FT * Π[:,:]
@@ -100,17 +100,6 @@ function compute_RHS!(V, Π, fV, fΠ, FT, IFT, Lkx, factor_∂x, factor_∂y, fa
 
     @cuda threads = block_dim blocks = grid_dim kernel_compute_RHS!(C, Np, Nm, ΔC, ΔNp, ΔNm, ∂CV, ∂NpV, ∂NmV, div_CV, div_NpV, div_NmV, RHS_C, RHS_Np, RHS_Nm, Dc, Dap, Dam, A, Kd, Ω0, Ω, Ωd)
 end
-
-#= function kernel_EulerForward!(Δt, C_new, Np_new, Nm_new, C_old, Np_old, Nm_old)  # Indexing (i,j)
-    i = (blockIdx().x - 1) * blockDim().x + threadIdx().x
-    j = (blockIdx().y - 1) * blockDim().y + threadIdx().y
-
-    C_new[i,j]  = C_old[i,j]  + Δt * RHS[i,j,1]
-    Np_new[i,j] = Np_old[i,j] + Δt * RHS[i,j,2]
-    Nm_new[i,j] = Nm_old[i,j] + Δt * RHS[i,j,3]
-
-    return nothing
-end =#
 
 function kernel_EulerForward!(Δt, C, Np, Nm, RHS_C, RHS_Np, RHS_Nm)  # Indexing (i,j)
     i = (blockIdx().x - 1) * blockDim().x + threadIdx().x

@@ -80,7 +80,7 @@ ZeroMeanNoise = CuArray{Float64}(Noise .- integrate((x,y), Noise)/(L^2)) # Noisy
 # Ni_IC .= CuArray{Float64}((1 - NaHSS) .* (1 .+ ZeroMeanNoise))
 
 # Final time reached by simulation
-FinalTime = 100
+FinalTime = 1e3
 
 #= # Adaptive timestep parameters
 MinTimeStep = 1e-15         # Simulation stops if time step drops below MinTimeStep
@@ -89,7 +89,7 @@ ErrorTolerance = 1e-10      # Error tolerance between Δt and 0.5*Δt steps =#
 # Saving parameters
 # Output file parameters
 Nt = FinalTime / Δt
-PrintEvery = 10                                   # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
+PrintEvery = 100                                  # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
 TotPrints = floor(Int64, FinalTime / PrintEvery)  # Total number of system states saved during the simulation
 dt = Dates.format(now(), "yyyymmdd")              # String of today's date
 DataFileName = "Data/"*dt*"-Data.jld"             # Name of output file

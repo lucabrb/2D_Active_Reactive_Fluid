@@ -133,7 +133,3 @@ end
 
 # Launch simulation
 main()
-
-c = load("Data/data00000000.jld", "actin")
-
-surface(x, y, c)
