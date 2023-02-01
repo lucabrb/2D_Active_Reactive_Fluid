@@ -1,5 +1,17 @@
 include("InputParameters.jl")
 
+function kernel_bump!(bump, L, VarBump, Δx, Δy)
+    i = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    j = (blockIdx().y - 1) * blockDim().y + threadIdx().y
+    @inbounds bump[i,j] = exp(-((i*Δx-L/2)^2 + (j*Δy-L/2)^2)/(2*(VarBump^2)))
+    return nothing
+end
+
+@inline function get_ZeroMeanBump!(bump, L, VarBump, Δx, Δy)
+    @cuda threads = block_dim blocks = grid_dim kernel_bump!(bump, L, VarBump, Δx, Δy)
+    bump .-= integrate((x,y), bump)/(L^2)
+end
+
 function kernel_compute_FFTderivative_factors!(factor_∂x, factor_∂y, factor_Δ, kx, ky, kx2, ky2) # Indexing (i,j)
     i = (blockIdx().x - 1) * blockDim().x + threadIdx().x
     j = (blockIdx().y - 1) * blockDim().y + threadIdx().y
@@ -67,11 +79,6 @@ function compute_RHS!(V, Π, fV, fΠ, FT, IFT, Lkx, factor_∂x, factor_∂y, fa
     @inbounds @views begin
         V[:,:,1]  .= IFT * fV[:,:,1]
         V[:,:,2]  .= IFT * fV[:,:,2]
-        
-        ∂V[:,:,1] .= IFT * (factor_∂x .* fV[:,:,1])
-        ∂V[:,:,2] .= IFT * (factor_∂x .* fV[:,:,2])
-        ∂V[:,:,3] .= IFT * (factor_∂y .* fV[:,:,1])
-        ∂V[:,:,4] .= IFT * (factor_∂y .* fV[:,:,2])
     end
 
     @inbounds @views begin

@@ -8,11 +8,13 @@ using JLD
 using Roots
 using NumericalIntegration
 using Dates
+using Printf
 
 # All quantities are expressed in non-dimensional units
 # Initialize a square spatial grid [-L/2 ; L/2] x [-L/2 ; L/2]
 L  = 10*π                                            # System size
-N  = 512                                             # Number of grid nodes
+N  = 512                                             # Number of grid node
+Nx = N; Ny = N
 Δx = L / (N-1)                                       # Grid spacing
 Δy = L / (N-1)
 x  = CuArray{Float64}([-L/2 + i*Δx for i = 0:N-1])   # Space vector
@@ -54,46 +56,28 @@ Kd  = 1
 Ω   = 15
 Ωd  = 10
 Z   = 15
-B   = Pars["Z"]
+B   = Z
 
 # Homogeneous Steady State (used in initial conditions below)
 # Solving EqnHSS = 0 for Na gives Na at HSS
-EqnHSS(Na) = - (Pars["Ωd"] * Pars["A"] / Pars["Kd"]) * Na^2 + Pars["Ω0"] * (1 - Na) * (1 + Pars["Ω"] * Na^2)
+EqnHSS(Na) = - (Ωd * A / Kd) * Na^2 + Ω0 * (1 - Na) * (1 + Ω * Na^2)
 NaHSS = find_zero(EqnHSS, (0, 1))
 # Ni and C at HSS are calculated from NaHSS
 NiHSS = 1 - NaHSS
-CHSS = (Pars["A"] / Pars["Kd"]) * (1 + NmHSS)/2
+CHSS = (A / Kd) * NaHSS
 
 # Initial Conditions (either HSS + weak noise or HSS + localized bump)
 # Parameters of noisy IC
-seedd = 123                                            # Seed of rand. number generator
+#= seedd = 123                                            # Seed of rand. number generator
 Random.seed!(seedd)                                    # Seeds random number generator
 ε   = 0.01                                             # Noise amplitude, small number
 Noise = CuArray{Float64}(ε .* (-1 .+ 2 .* rand(Float64, Nx, Ny)))        # Matrix of weak noise, made of random numbers between ε*[-1, 1]
-ZeroMeanNoise = CuArray{Float64}(Noise .- integrate((x,y), Noise)/(L^2)) # Noisy vector with zero average, s.t. HSS + Noise conserves tot. number of molecules
-# Parameters of localized square bump IC
-Bump = CuArray{Float64}(zeros(Nx, Ny))
-Bump_center_x = 0                                      # Bump will be centered at (X,Y) = Bump_center_(x,y)
-Bump_center_y = 0
-for i in 1:Nx, j in 1:Ny                               # Bump has diameter 10 and height 1
-    if sqrt(x[i]^2 + y[j]^2) <= 5
-        Bump[i, j] = 1
-    end
-end
-ZeroMeanBump = CuArray{Float64}(Bump .- integrate((x,y), Bump)/(L^2))    # Remove average from bump, same reason as for noisy IC above
-# Initialize IC
-# Uncomment if desired IC is HSS + localized bump
-Perturbation = CuArray{Float64}(exp.(-(x./5).^2) + exp.(-(y./5).^2))
-C_IC  .= CuArray{Float64}(CHSS        .* (1 .+ ZeroMeanBump))
-Na_IC .= CuArray{Float64}(NaHSS       .* (1 .+ ZeroMeanBump))
-Ni_IC .= CuArray{Float64}((1 - NaHSS) .* (1 .+ ZeroMeanBump))
+ZeroMeanNoise = CuArray{Float64}(Noise .- integrate((x,y), Noise)/(L^2)) # Noisy vector with zero average, s.t. HSS + Noise conserves tot. number of molecules =#
+
 # Uncomment if desired IC is HSS + weak noise
 # C_IC  .= CuArray{Float64}(CHSS        .* (1 .+ ZeroMeanNoise))
 # Na_IC .= CuArray{Float64}(NaHSS       .* (1 .+ ZeroMeanNoise))
 # Ni_IC .= CuArray{Float64}((1 - NaHSS) .* (1 .+ ZeroMeanNoise))
-# Replace (Na, Ni) → (Nm, Np)
-@. Nm_IC = Na_IC - Ni_IC
-@. Np_IC = Na_IC + Ni_IC
 
 # Final time reached by simulation
 FinalTime = 100
