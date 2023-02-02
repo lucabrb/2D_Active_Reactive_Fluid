@@ -89,7 +89,7 @@ ErrorTolerance = 1e-10      # Error tolerance between Δt and 0.5*Δt steps =#
 # Saving parameters
 # Output file parameters
 Nt = FinalTime / Δt
-PrintEvery = 100                                  # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
+PrintEvery = 100000                               # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
 TotPrints = floor(Int64, FinalTime / PrintEvery)  # Total number of system states saved during the simulation
 dt = Dates.format(now(), "yyyymmdd")              # String of today's date
 DataFileName = "Data/"*dt*"-Data.jld"             # Name of output file

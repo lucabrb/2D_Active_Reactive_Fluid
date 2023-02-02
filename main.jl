@@ -95,7 +95,7 @@ function main()
              global nm = string("Data/data",numm,".jld")
              save(nm, "actin", Array(C), "active_nucleator", Array((Np .+ Nm)/2), "inactive_nucleator", Array((Np .- Nm)/2), "velocity", Array(V))
              #println(idx, " ", t)
-             println(t)
+             println(t, "of ", Nt)
         end
         EulerForward!(Δt, V, Π, fV, fΠ, FT, IFT, Lkx, factor_∂x, factor_∂y, factor_Δ, Z, B, C, Np, Nm, ΔC, ΔNp, ΔNm, ∂CV, ∂NpV, ∂NmV, div_CV, div_NpV, div_NmV, RHS_C, RHS_Np, RHS_Nm, Dc, Dap, Dam, A, Kd, Ω0, Ω, Ωd)
     end
