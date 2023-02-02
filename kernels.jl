@@ -9,7 +9,7 @@ end
 
 @inline function get_ZeroMeanBump!(bump, L, VarBump, Δx, Δy)
     @cuda threads = block_dim blocks = grid_dim kernel_bump!(bump, L, VarBump, Δx, Δy)
-    bump .-= integrate((x,y), bump)/(L^2)
+    bump .-= sum(bump)*Δx*Δy/(L^2)
 end
 
 function kernel_compute_FFTderivative_factors!(factor_∂x, factor_∂y, factor_Δ, kx, ky, kx2, ky2) # Indexing (i,j)

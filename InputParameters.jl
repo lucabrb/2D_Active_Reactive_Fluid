@@ -1,14 +1,17 @@
-# Libraries
-using CUDA
-using Plots
-using LinearAlgebra
-using Random
-using FFTW
-using JLD
-using Roots
-using NumericalIntegration
-using Dates
-using Printf
+include("../Utilities/using.jl")
+using_pkg("FFTW, Distributions, DelimitedFiles, CSV, DataFrames, Dates, Printf, JLD, CUDA, Roots, LinearAlgebra, Random")
+
+idx = Base.parse(Int, ENV["SLURM_ARRAY_TASK_ID"])
+
+dir = "/home/users/b/barberil/Data/" 
+@show fn = "$idx/"
+file = joinpath(dir, fn)
+# path to save Data on computer
+localpath = "C:/Users/binar/Desktop/Data-3/"
+mkpath(file)
+
+dir_df = @__DIR__
+df = CSV.read(joinpath(dir_df,"DF.csv"), DataFrame)[idx,:]
 
 # All quantities are expressed in non-dimensional units
 # Initialize a square spatial grid [-L/2 ; L/2] x [-L/2 ; L/2]
@@ -53,9 +56,9 @@ Dam = Da - Di
 A   = 1
 Kd  = 1
 Ω0  = 0.5
-Ω   = 15
 Ωd  = 10
-Z   = 15
+Ω   = Float64(df[:Omega])
+Z   = Float64(df[:Z])
 B   = Z
 
 # Homogeneous Steady State (used in initial conditions below)
@@ -88,8 +91,14 @@ ErrorTolerance = 1e-10      # Error tolerance between Δt and 0.5*Δt steps =#
 
 # Saving parameters
 # Output file parameters
-Nt = FinalTime / Δt
-PrintEvery = 100000                               # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
+Nt = Int(floor(FinalTime / Δt))
+PrintEvery = Int(floor(Nt / 100))                 # Save state of system with time intervals = FrameTimeStep (in non-dim. units)
 TotPrints = floor(Int64, FinalTime / PrintEvery)  # Total number of system states saved during the simulation
-dt = Dates.format(now(), "yyyymmdd")              # String of today's date
-DataFileName = "Data/"*dt*"-Data.jld"             # Name of output file
+#= dt = Dates.format(now(), "yyyymmdd")           # String of today's date
+DataFileName = "Data/"*dt*"-Data.jld"             # Name of output file =#
+
+# Directory for saving the files corresponding to the simulation
+println("path_c = ", dir)
+println("path_l = ", localpath)
+println(idx)
+set_zero_subnormals(true)
