@@ -69,19 +69,6 @@ NaHSS = find_zero(EqnHSS, (0, 1))
 NiHSS = 1 - NaHSS
 CHSS = (A / Kd) * NaHSS
 
-# Initial Conditions (either HSS + weak noise or HSS + localized bump)
-# Parameters of noisy IC
-#= seedd = 123                                            # Seed of rand. number generator
-Random.seed!(seedd)                                    # Seeds random number generator
-ε   = 0.01                                             # Noise amplitude, small number
-Noise = CuArray{Float64}(ε .* (-1 .+ 2 .* rand(Float64, Nx, Ny)))        # Matrix of weak noise, made of random numbers between ε*[-1, 1]
-ZeroMeanNoise = CuArray{Float64}(Noise .- integrate((x,y), Noise)/(L^2)) # Noisy vector with zero average, s.t. HSS + Noise conserves tot. number of molecules =#
-
-# Uncomment if desired IC is HSS + weak noise
-# C_IC  .= CuArray{Float64}(CHSS        .* (1 .+ ZeroMeanNoise))
-# Na_IC .= CuArray{Float64}(NaHSS       .* (1 .+ ZeroMeanNoise))
-# Ni_IC .= CuArray{Float64}((1 - NaHSS) .* (1 .+ ZeroMeanNoise))
-
 # Final time reached by simulation
 FinalTime = 1e3
 

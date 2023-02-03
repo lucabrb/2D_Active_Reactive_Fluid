@@ -12,6 +12,10 @@ end
     bump .-= sum(bump)*Δx*Δy/(L^2)
 end
 
+@inline function get_ZeroMeanNoise!(noise, L, Δx, Δy)
+    noise .-= sum(noise)*Δx*Δy/(L^2)
+end
+
 function kernel_compute_FFTderivative_factors!(factor_∂x, factor_∂y, factor_Δ, kx, ky, kx2, ky2) # Indexing (i,j)
     i = (blockIdx().x - 1) * blockDim().x + threadIdx().x
     j = (blockIdx().y - 1) * blockDim().y + threadIdx().y

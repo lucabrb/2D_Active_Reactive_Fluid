@@ -1,11 +1,4 @@
-#= # Set current directory as working directory
-cd(@__DIR__) =#
 include("kernels.jl")
-
-#= # If absent, create Data/ folder
-if isdir("Data") == false
-    mkdir("Data")
-end =#
 
 function main()
     @inbounds begin
@@ -64,27 +57,33 @@ function main()
         fV = CUDA.zeros(ComplexF64, Lkx, Ny, 2)
         fΠ = CUDA.zeros(ComplexF64, Lkx, Ny)
 
-        #= # Initialize vectors where fields are saved for plots
-        SavedFields = CuArray{Float64}(zeros(3, Nx, Ny, TotPrints))
-        Savedv      = CuArray{Float64}(zeros(2, Nx, Ny, TotPrints)) =#
-
     #=     # Initialize time evolution parameters
         ThisFrame    = 1             # Used to save system state in SavedFields and Savedv matrices, ∈ [1, TotPrints]
         LastSaveTime = 0             # Last time system state was saved, in non-dim. units
         CurrentTime  = 0             # Real time at current time frame
         Δt_old       = 0.01 =#
 
-        # Parameters of localized square bump IC
+        # Initial Conditions
+        # Parameters of localized bump IC
         ZeroMeanBump = CuArray{Float64}(zeros(Nx, Ny))
         get_ZeroMeanBump!(ZeroMeanBump, L, 2^0.5, Δx, Δy)
-        # Initial Conditions
         # Uncomment if desired IC is HSS + localized bump
-        @. C[:,:]  = CHSS          * (1 + ZeroMeanBump)
-        @. Nm[:,:] = (2*NaHSS - 1) * (1 + ZeroMeanBump)
-        @. Np[:,:] =                  1 + ZeroMeanBump
+        # @. C[:,:]  = CHSS          * (1 + ZeroMeanBump)
+        # @. Nm[:,:] = (2*NaHSS - 1) * (1 + ZeroMeanBump)
+        # @. Np[:,:] =                  1 + ZeroMeanBump
+        # Parameters of noisy IC
+        seedd = 123                                             # Seed of rand. number generator
+        Random.seed!(seedd)                                     # Seeds random number generator
+        ε   = 0.01                                              # Noise amplitude, small number
+        ZeroMeanNoise = CuArray{Float64}(rand(Float64, Nx, Ny)) # Matrix of weak noise, made of random numbers between ε*[-1, 1]
+        @. ZeroMeanNoise = ε * (-1 + 2 * ZeroMeanNoise)
+        get_ZeroMeanNoise!(ZeroMeanNoise, L, Δx, Δy)            # Noisy vector with zero average, s.t. HSS + Noise conserves tot. number of molecules
+        # Uncomment if desired IC is HSS + weak noise
+        @. C[:,:]  = CHSS          * (1 + ZeroMeanNoise)
+        @. Nm[:,:] = (2*NaHSS - 1) * (1 + ZeroMeanNoise)
+        @. Np[:,:] =                  1 + ZeroMeanNoise
 
-        # 🚧 COPY LUDO'S FILE HANDLING 🚧
-        #mkpath(string(file,"Data/")); global nm = ""
+        mkpath(string(file,"Data/")); global nm = ""
 
         println("Simulation starts...")
         # Simulation runs either until FinalTime reached, or until Δt drops below tolerance
